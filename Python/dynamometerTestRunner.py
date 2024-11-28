@@ -136,7 +136,8 @@ def communicate_with_arduino(settings):
             else:
                 print("Unknown command. Try again.")
     except Exception as e:
-        print(f"Error: {e}")
+        print("There was an error in the main loop, likely serial connection issue, see details below: \n")
+        print(e)
     finally:
         if ser.is_open:
             ser.close()
