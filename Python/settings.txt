@@ -1,0 +1,6 @@
+serial_port=COM3
+baud_rate=115200
+pwm_step_size=5
+command_delay=0.3
+serial_connection_wait: 2
+csv_file=test_log.csv
