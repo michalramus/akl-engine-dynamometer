@@ -16,8 +16,6 @@ const double INA228_MAX_CURRENT = 204.8;
 
 const int PWM_PIN = 9;
 
-float current_reading = 0;
-long tens_reading = 0;
 int pwm = 0;
 unsigned int lastMessageTime = 0;
 
@@ -86,11 +84,10 @@ void loop() {
 }
 
 void sendReading() {
-    current_reading = ina228.readCurrent();
-    tens_reading = tens.get_units(5);
+    Serial.println("{\"current\": " + String(ina228.readCurrent()) +
+                   ", \"voltage\": " + String(ina228.readBusVoltage()) +
+                   ", \"tens\": " + String(tens.get_units(5)) +
+                   ", \"pwm\": " + String(pwm) + "}\n");
 
-    Serial.println("{\"current\": " + String(current_reading) + ", \"tens\": " +
-                   String(tens_reading) + ", \"pwm\": " + String(pwm) + "}\n");
-
-//{"current": 0.0, "tens": 0.0, "pwm": 0}
+    //{"current": 0.0, "voltage": 0.0, "tens": 0.0, "pwm": 0}
 }
