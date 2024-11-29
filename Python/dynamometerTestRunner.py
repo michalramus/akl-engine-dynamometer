@@ -20,6 +20,9 @@ def read_settings(filename="settings.txt"):
     if os.path.exists(filename):
         with open(filename, "r") as file:
             for line in file:
+                if not "=" in line: # Skip lines without an '=' sign
+                    print(f"Skipping line of settings because of incorrect syntax: {line}")
+                    continue
                 key, value = line.strip().split("=")
                 if key in settings:
                     settings[key] = int(value) if value.isdigit() else value
