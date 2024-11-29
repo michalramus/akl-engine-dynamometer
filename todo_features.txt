@@ -1,6 +1,4 @@
 Zadajesz ciąg, jaki chcesz uzyskać i on dostosowuje pwm do osiągnięcia tego ciągu.
 Tak żeby można było porównywać śmigła/silniki pod kątem zużycia energii dla tego samego ciągu.
 
-Pomiar napięcia, na arduino jak i odczyt w pythonie.
-
 Opcjonalnie obsługa pomiaru ciśnienia, wilogtności i temperatury.

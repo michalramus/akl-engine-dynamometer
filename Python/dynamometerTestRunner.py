@@ -13,8 +13,8 @@ def read_settings(filename="settings.txt"):
         "serial_port": "COM3",
         "baud_rate": 115200,
         "pwm_step_size": 5,
-        "command_delay": 0.3,
-        "serial_connection_wait": 2,
+        "command_delay": 0.9,
+        "serial_connection_wait": 3,
         "csv_file": "test_log.csv"
     }
     if os.path.exists(filename):
@@ -31,26 +31,30 @@ def save_to_csv(filename, data):
     with open(filename, "a", newline="") as csvfile:
         writer = csv.writer(csvfile)
         if file_existed:
-            writer.writerow(["PWM", "Current", "Tens"])
+            writer.writerow(["PWM", "Voltage", "Current", "Tens"])
         writer.writerows(data)
 
 # Plot graphs from the loggeed data (from file)
 def generate_graphs(csv_file):
     try:
+
         data = pd.read_csv(csv_file)
-        required_columns = ["PWM", "Current", "Tens"]
+        required_columns = ["PWM", "Voltage", "Current", "Tens"]
         if not all(col in data.columns for col in required_columns):
             raise ValueError(f"CSV file must contain the following columns: {required_columns}")
+        
 
-        # Plot PWM vs Current
+        data["Power"] = data["Voltage"] * data["Current"]
+
+        # Plot PWM vs Power
         plt.figure(figsize=(10, 6))
-        plt.plot(data["PWM"], data["Current"], marker='o', label="PWM vs Current", color="blue")
-        plt.title("PWM vs Current")
+        plt.plot(data["PWM"], data["Power"], marker='o', label="PWM vs Power", color="blue")
+        plt.title("PWM vs Power")
         plt.xlabel("PWM")
-        plt.ylabel("Current (A)")
+        plt.ylabel("Power (W)")
         plt.grid(True)
         plt.legend()
-        plt.savefig("PWM_vs_Current.png")
+        plt.savefig("PWM_vs_Power.png")  # Save graph to file
         plt.show()
 
         # Plot PWM vs Tens
@@ -61,18 +65,18 @@ def generate_graphs(csv_file):
         plt.ylabel("Tens")
         plt.grid(True)
         plt.legend()
-        plt.savefig("PWM_vs_Tens.png")
+        plt.savefig("PWM_vs_Tens.png")  # Save graph to file
         plt.show()
 
-        # Plot Current vs Tens
+        # Plot Power vs Tens
         plt.figure(figsize=(10, 6))
-        plt.plot(data["Current"], data["Tens"], marker='o', label="Current vs Tens", color="red")
-        plt.title("Current vs Tens")
-        plt.xlabel("Current (A)")
+        plt.plot(data["Power"], data["Tens"], marker='o', label="Power vs Tens", color="red")
+        plt.title("Power vs Tens")
+        plt.xlabel("Power (W)")
         plt.ylabel("Tens")
         plt.grid(True)
         plt.legend()
-        plt.savefig("Current_vs_Tens.png")
+        plt.savefig("Power_vs_Tens.png")  # Save graph to file
         plt.show()
 
         print("Graphs generated and saved as PNG files.")
@@ -97,7 +101,10 @@ def start_test(ser, settings):
         ser.write(command.encode())
         time.sleep(delay)
 
-        # Get result
+        #Send a message to signal the connection is active
+        ser.write(b"get\n")
+        time.sleep(delay)
+        # Get result (after waiting to stabilise)
         ser.write(b"get\n")
         response = ser.readline().decode().strip()
         print(f"requested PWM: {pwm}, Response: {response}")
@@ -105,7 +112,7 @@ def start_test(ser, settings):
         # Parse and add data to log
         try:
             response_data = json.loads(response)
-            data_log.append([pwm, response_data["current"], response_data["tens"]])
+            data_log.append([response_data["pwm"],response_data["voltage"], response_data["current"], response_data["tens"]])
         except Exception as e:
             print(f"Failed to parse response: {response}, Error: {e}")
 
