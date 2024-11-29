@@ -3,7 +3,7 @@
 
 #include "HX711.h"
 
-const int EMERGENCY_STOP_TIME = 1000;
+const int EMERGENCY_STOP_TIME = 2000;
 
 const int PIN_TENS_CLK = 3;
 const int PIN_TENS_DATA = 2;
