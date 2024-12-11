@@ -5,6 +5,8 @@
 
 const int EMERGENCY_STOP_TIME = 2000;
 
+const int PIN_TENS_CLK = 2;
+const int PIN_TENS_DATA = 3;
 const long LOADCELL_DIVIDER = 175000.0;
 
 const int INA228_I2CADDR = 69;
