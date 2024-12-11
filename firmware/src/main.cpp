@@ -5,10 +5,7 @@
 
 const int EMERGENCY_STOP_TIME = 2000;
 
-const int PIN_TENS_CLK = 3;
-const int PIN_TENS_DATA = 2;
-const long LOADCELL_OFFSET = 50682624;
-const long LOADCELL_DIVIDER = 5895655;
+const long LOADCELL_DIVIDER = 175000.0;
 
 const int INA228_I2CADDR = 69;
 const double INA228_SHUNT_RESISTANCE = 0.0002;
@@ -33,24 +30,35 @@ void setup() {
     }
 
     // setup INA228
+    Serial.println("Adafruit INA228 Current Sensor Test");
     if (!ina228.begin(INA228_I2CADDR)) {
-        Serial.println("Couldn't find INA228 chip");
-        while (1);
+        while (1) {
+            Serial.println("Could not find INA228 chip. Restart MCU.");
+            delay(1000);
+        }
     }
     ina228.setShunt(INA228_SHUNT_RESISTANCE, INA228_MAX_CURRENT);
     ina228.setAveragingCount(INA228_COUNT_16);
     ina228.setVoltageConversionTime(INA228_TIME_150_us);
     ina228.setCurrentConversionTime(INA228_TIME_280_us);
+    Serial.println("Found INA228 chip");
 
     // setup HX711
+    Serial.println("HX711 Scale Test");
     tens.begin(PIN_TENS_DATA, PIN_TENS_CLK);
     tens.set_scale(LOADCELL_DIVIDER);
-    tens.set_offset(LOADCELL_OFFSET);
+    
 
-    if (!tens.wait_ready_timeout(1000)) {
-        Serial.println("HX711 not found.");
-        while (1);
+    if (!tens.wait_ready_timeout(1000)) {  
+        while (1) {
+            delay(1000);
+            Serial.println("HX711 not found. Restart MCU");
+        }
     }
+
+    tens.tare(5);
+
+    Serial.println("Found HX711 chip");
 
     lastMessageTime = millis();  // Update timer
 }
