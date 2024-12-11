@@ -23,6 +23,7 @@ Adafruit_INA228 ina228 = Adafruit_INA228();
 HX711 tens;
 
 void sendReading();
+void updatePwm(int _pwm);
 
 void setup() {
     Serial.begin(115200);
@@ -61,12 +62,7 @@ void loop() {
             lastMessageTime = millis();
             sendReading();
         } else if (command.startsWith("set ")) {
-            pwm = command.substring(4).toInt();
-            if (pwm < 0) {
-                pwm = 0;
-            } else if (pwm > 255) {
-                pwm = 255;
-            }
+            updatePwm(command.substring(4).toInt());
             sendReading();
             lastMessageTime = millis();
         }
@@ -74,12 +70,7 @@ void loop() {
 
     //  Emergency stop if no message received in EMEGENCY_STOP_TIME
     if (millis() - lastMessageTime > EMERGENCY_STOP_TIME) {
-        pwm = 0;
-    }
-
-    //  Update PWM every 100ms
-    if (millis() % 100 == 0) {
-        analogWrite(PWM_PIN, pwm);
+        updatePwm(0);
     }
 }
 
@@ -90,4 +81,14 @@ void sendReading() {
                    ", \"pwm\": " + String(pwm) + "}\n");
 
     //{"current": 0.0, "voltage": 0.0, "tens": 0.0, "pwm": 0}
+}
+
+void updatePwm(int _pwm) {
+    if (_pwm < 0) {
+        _pwm = 0;
+    } else if (_pwm > 255) {
+        _pwm = 255;
+    }
+    analogWrite(PWM_PIN, _pwm);
+    pwm = _pwm;
 }
