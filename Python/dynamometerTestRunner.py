@@ -6,9 +6,13 @@ import time
 import csv
 import os
 
+# Globals
+settings = {}
+ser = None
 
 # Read settings from config file
 def read_settings(filename="settings.txt"):
+    global settings
     settings = {
         "serial_port": "COM3",
         "baud_rate": 115200,
@@ -38,7 +42,10 @@ def save_to_csv(filename, data):
         writer.writerows(data)
 
 # Plot graphs from the loggeed data (from file)
-def generate_graphs(csv_file):
+def generate_graphs(csv_file = ""):
+    global settings
+    if csv_file == "":
+        csv_file = settings["csv_file"]
     try:
 
         data = pd.read_csv(csv_file)
@@ -92,7 +99,8 @@ def generate_graphs(csv_file):
         print(f"An unexpected error occurred: {e}")
 
 # Conduct the test and log results to CSV
-def start_test(ser, settings):
+def start_test():
+    global settings, ser
     pwm_step = settings["pwm_step_size"]
     delay = settings["command_delay"]
     max_pwm = 255
@@ -123,7 +131,8 @@ def start_test(ser, settings):
     save_to_csv(settings["csv_file"], data_log)
     print(f"Test completed. Results saved to {settings['csv_file']}")
 
-def communicate_with_arduino(settings):
+def communicate_with_arduino():
+    global settings, ser
     try:
         ser = serial.Serial(settings["serial_port"], settings["baud_rate"], timeout=1)
         time.sleep(settings["serial_connection_wait"])
@@ -134,7 +143,7 @@ def communicate_with_arduino(settings):
             if command == "quit":
                 break
             elif command == "startTest":
-                start_test(ser, settings)
+                start_test(ser)
             elif command.startswith("set "):
                 ser.write((command + "\n").encode())
                 response = ser.readline().decode().strip()
@@ -143,6 +152,9 @@ def communicate_with_arduino(settings):
                 ser.write((command + "\n").encode())
                 response = ser.readline().decode().strip()
                 print(f"Arduino: {response}")
+            elif command == "makeGraphs":
+                print("Generating graphs...")
+                generate_graphs(settings["csv_file"])
             else:
                 print("Unknown command. Try again.")
     except Exception as e:
@@ -153,8 +165,7 @@ def communicate_with_arduino(settings):
             ser.close()
         print("Connection closed.")
 
-
-
+read_settings()  # always read the settings on file load, avoid having to call it from frontend
 if __name__ == "__main__":
-    settings = read_settings()
-    communicate_with_arduino(settings)
+    
+    communicate_with_arduino()
