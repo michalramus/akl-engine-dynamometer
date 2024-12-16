@@ -161,9 +161,12 @@ def communicate_with_arduino():
         print("There was an error in the main loop, likely serial connection issue, see details below: \n")
         print(e)
     finally:
-        if ser.is_open:
-            ser.close()
-        print("Connection closed.")
+        try:
+            if ser.is_open:
+                ser.close()
+            print("Connection closed.")
+        except Exception as e:
+            pass    # ser could be None or already closed, we are quitting anyway
 
 read_settings()  # always read the settings on file load, avoid having to call it from frontend
 if __name__ == "__main__":
