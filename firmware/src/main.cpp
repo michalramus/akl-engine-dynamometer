@@ -49,9 +49,8 @@ void setup() {
     Serial.println("HX711 Scale Test");
     tens.begin(PIN_TENS_DATA, PIN_TENS_CLK);
     tens.set_scale(LOADCELL_DIVIDER);
-    
 
-    if (!tens.wait_ready_timeout(1000)) {  
+    if (!tens.wait_ready_timeout(1000)) {
         while (1) {
             delay(1000);
             Serial.println("HX711 not found. Restart MCU");
@@ -75,6 +74,8 @@ void loop() {
             updatePwm(command.substring(4).toInt());
             sendReading();
             lastMessageTime = millis();
+        } else {
+            Serial.println("Unknown command");
         }
     }
 
