@@ -89,7 +89,7 @@ void sendReading() {
     Serial.println("{\"current\": " + String(ina228.readCurrent()) +
                    ", \"voltage\": " + String(ina228.readBusVoltage()) +
                    ", \"tens\": " + String(tens.get_units(5)) +
-                   ", \"pwm\": " + String(pwm) + "}\n");
+                   ", \"pwm\": " + String(pwm) + "}");
 
     //{"current": 0.0, "voltage": 0.0, "tens": 0.0, "pwm": 0}
 }
