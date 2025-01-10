@@ -1,0 +1,20 @@
+{
+    "appId": "com.hamownia.app", 
+    "files": [
+        "dist-react","dist-electron" 
+    ],
+    "extraResources": [
+        "dist-electron/preload.js"
+    ],
+    "icon": "./icon.png",
+    "mac": {
+        "target": "dmg"
+    },
+    "linux": {
+        "target": "AppImage",
+        "category": "Utility"
+    },
+    "win": {
+        "target": ["portable","msi"]
+    }
+}

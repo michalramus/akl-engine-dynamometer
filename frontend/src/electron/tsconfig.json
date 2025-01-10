@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "strict": true,
+      "target": "ES2020",
+      "module": "ESNext",
+      "outDir": "../../dist-electron",
+      "skipLibCheck": true,
+      "moduleResolution": "bundler",
+      
+    }, 
+    "type":"module"
+  }
+  

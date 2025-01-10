@@ -4,7 +4,11 @@
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+/.history
+/frontend/tmp.py 
+/frontend/tmp2.py  
+
 
 # Thumbnails
 ._*

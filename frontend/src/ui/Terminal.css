@@ -1,0 +1,21 @@
+.terminal_container{
+    background: #3e3e3e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    overflow: hidden;
+    margin: 10px;
+}
+
+.terminal{
+    height: 250px;
+    overflow-y: auto;
+    background-color: black;
+    color: green;
+    padding: 10px;
+    font-family: monospace;
+    border-radius: 5px;
+    
+}
+
