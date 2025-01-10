@@ -1,9 +1,10 @@
 #include <Adafruit_INA228.h>
 #include <Arduino.h>
+#include <Servo.h>
 
 #include "HX711.h"
 
-const int EMERGENCY_STOP_TIME = 2000;
+const unsigned long EMERGENCY_STOP_TIME = 2000;
 
 const int PIN_TENS_CLK = 2;
 const int PIN_TENS_DATA = 3;
@@ -15,14 +16,16 @@ const double INA228_MAX_CURRENT = 204.8;
 
 const int PWM_PIN = 9;
 
-int pwm = 0;
-unsigned int lastMessageTime = 0;
+int pwmTime = 0;
+unsigned long lastMessageTime = 0;
 
 Adafruit_INA228 ina228 = Adafruit_INA228();
 HX711 tens;
 
+Servo esc;
+
 void sendReading();
-void updatePwm(int _pwm);
+void updatePwm(int _pwmTime);
 
 void setup() {
     Serial.begin(115200);
@@ -30,6 +33,10 @@ void setup() {
     while (!Serial) {
         delay(10);
     }
+
+    // Initialize ESC pin
+    esc.attach(PWM_PIN);
+    esc.writeMicroseconds(1000);
 
     // setup INA228
     Serial.println("Adafruit INA228 Current Sensor Test");
@@ -68,8 +75,8 @@ void loop() {
     if (Serial.available() > 0) {
         String command = Serial.readStringUntil('\n');
         if (command == "get") {
-            lastMessageTime = millis();
             sendReading();
+            lastMessageTime = millis();
         } else if (command.startsWith("set ")) {
             updatePwm(command.substring(4).toInt());
             sendReading();
@@ -81,7 +88,7 @@ void loop() {
 
     //  Emergency stop if no message received in EMEGENCY_STOP_TIME
     if (millis() - lastMessageTime > EMERGENCY_STOP_TIME) {
-        updatePwm(0);
+        updatePwm(1000);
     }
 }
 
@@ -89,17 +96,17 @@ void sendReading() {
     Serial.println("{\"current\": " + String(ina228.readCurrent()) +
                    ", \"voltage\": " + String(ina228.readBusVoltage()) +
                    ", \"tens\": " + String(tens.get_units(5)) +
-                   ", \"pwm\": " + String(pwm) + "}");
+                   ", \"pwm\": " + String(pwmTime) + "}");
 
     //{"current": 0.0, "voltage": 0.0, "tens": 0.0, "pwm": 0}
 }
 
-void updatePwm(int _pwm) {
-    if (_pwm < 0) {
-        _pwm = 0;
-    } else if (_pwm > 255) {
-        _pwm = 255;
+void updatePwm(int _pwmTime) {
+    if (_pwmTime < 1000) {
+        _pwmTime = 1000;
+    } else if (_pwmTime > 2000) {
+        _pwmTime = 2000;
     }
-    analogWrite(PWM_PIN, _pwm);
-    pwm = _pwm;
+    esc.writeMicroseconds(_pwmTime);
+    pwmTime = _pwmTime;
 }
