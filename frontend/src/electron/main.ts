@@ -2,41 +2,58 @@ import {app, BrowserWindow, ipcMain} from 'electron';
 import {SerialPort} from "serialport";
 import { ReadlineParser } from "@serialport/parser-readline";
 import * as path from 'path';
+import * as fs from 'fs';
+import {defaultSettings, Settings} from './settings.js';
+import {validateSettings} from './path_utils.js';
 
-interface Settings {
-    serial_port: string;
-    baud_rate: number;
-    pwm_step_size: number;
-    command_delay: number;
-    serial_connection_wait: number;
-    csv_file: string;
-}
- 
-const defaultSettings: Settings = {
-    serial_port: "COM11",
-    baud_rate: 115200,
-    pwm_step_size: 5,
-    command_delay: 30,
-    serial_connection_wait: 3,
-    csv_file: "test_log.csv",
-};
 
+let arduinoSettings: Settings = defaultSettings;
 
 const commands: string[] = [];
-let serialPort: SerialPort = new SerialPort({
-    path: defaultSettings.serial_port,
-    baudRate: defaultSettings.baud_rate
-  });
-let parser : ReadlineParser = serialPort.pipe(new ReadlineParser({ delimiter: "\n" }));
+let serialPort: SerialPort;
+let parser: ReadlineParser;
+
+function loadSettingsFromFile() {
+  const settingsPath = path.join(app.getAppPath(), process.env.NODE_ENV == "development" ? ".":"..", "/settings.json");
+  try {
+    if (fs.existsSync(settingsPath)) {
+      const data = fs.readFileSync(settingsPath, 'utf-8');
+      const jsonData = JSON.parse(data);
+
+      if (validateSettings(jsonData)) {
+        arduinoSettings = jsonData;
+      }
+    } else {
+      console.log('Settings file not found. Creating a new file with default settings.');
+      arduinoSettings = defaultSettings;
+      saveSettingsToFile();
+    }
+  } catch (err) {
+    console.error('Error loading settings:', err);
+    arduinoSettings = defaultSettings;
+  }
+}
 
 
+function saveSettingsToFile() {
+  try {
+    const data = JSON.stringify(arduinoSettings, null, 2);
+    fs.writeFileSync(path.join(app.getAppPath(), process.env.NODE_ENV == "development" ? ".":"..", "/settings.json"), data, 'utf-8');
+    console.log(data);
+    console.log('Settings saved successfully');
+  } catch (err) {
+    console.error('Error saving settings:', err);
+  }
+}
 
 const createWindow = () => {
+  loadSettingsFromFile();
+
   const win = new BrowserWindow({
     width: 1920,
     height: 1080,
     webPreferences: {
-      preload: path.join(app.getAppPath(), process.env.NODE_ENV == "development" ? ".":",", "/dist-electron/preload.cjs"),
+      preload: path.join(app.getAppPath(), process.env.NODE_ENV == "development" ? ".":"..", "/dist-electron/preload.cjs"),
       nodeIntegration: true,
       contextIsolation: true
     },
@@ -46,6 +63,14 @@ const createWindow = () => {
   }else{
     win.loadURL(path.join(app.getAppPath() + '/dist-react/index.html'));
   }
+
+  serialPort = new SerialPort({
+    path: arduinoSettings.serial_port,
+    baudRate: arduinoSettings.baud_rate
+  });
+  parser = serialPort.pipe(new ReadlineParser({ delimiter: "\n" }));
+
+
   startBackgroundLoop(win);
   ipcMain.on("send-command", (_, command) => {parseCommand(command)});
   ipcMain.on("change-arduino-port", (_,new_port,new_baud_rate) => changeArduinoPort(new_port,new_baud_rate));
@@ -53,7 +78,9 @@ const createWindow = () => {
 }
 
 function changeSaveFile(file: string) {
-  defaultSettings.csv_file = file;
+  console.log("Changing save file to:", file);
+  arduinoSettings.csv_file = file;
+  saveSettingsToFile();
 }
 
 app.whenReady().then(() => {
@@ -67,11 +94,28 @@ app.whenReady().then(() => {
 })
 
 function changeArduinoPort(new_port:string, new_baud_rate:number) {
-    serialPort = new SerialPort({
-        path:new_port,
-        baudRate: new_baud_rate
-      });
-    parser = serialPort.pipe(new ReadlineParser({ delimiter: "\n" }));
+  console.log("Changing port to:", new_port, "with baud rate:", new_baud_rate);
+  if (serialPort) {
+    serialPort.close((err) => {
+      if (err) {
+        console.error("Error closing port:", err);
+      } else {
+        console.log("Port closed successfully");
+      }
+    });
+  }
+
+  serialPort = new SerialPort({
+    path: new_port,
+    baudRate: new_baud_rate
+  });
+
+  parser = serialPort.pipe(new ReadlineParser({ delimiter: "\n" }));
+  arduinoSettings.serial_port = new_port;
+  arduinoSettings.baud_rate = new_baud_rate;
+  saveSettingsToFile();
+
+  console.log("Port changed successfully");
 }
 
 function startBackgroundLoop(win: BrowserWindow) {
@@ -94,23 +138,36 @@ function startBackgroundLoop(win: BrowserWindow) {
 }
 
 function parseCommand(command: string): boolean {
-    if(command == "get" || command.startsWith("set ")) {
-        commands.push(command);
-        return true;
-    }
-    if(command == "startTest"){
-      console.log("Starting test");
+  const setCommandRegex = /^set (\d+)$/;
+  const match = command.match(setCommandRegex);
+
+  if (command == "get" || command.startsWith("set ")) {
+      if (match) {
+          const pwmValue = parseInt(match[1]);
+          if (pwmValue >= 1000 && pwmValue <= 2000) {
+              commands.push(command);
+              return true;
+          } else {
+              return false;
+          }
+      } else {
+          return false;
+      }
+  }
+  if (command == "startTest") {
       startTest();
-    }
-    return false;
+      return true;
+  }
+  return false;
 }
+
 
 async function startTest(){
   console.log("Starting test");
   const pwm_step:number = defaultSettings.pwm_step_size;
   const delay:number = defaultSettings.command_delay;
   const max_pwm:number = 2000;
-  const data_log:Array<string> = []
+  // const data_log:Array<string> = []
 
   for (let pwm = 1000; pwm <= max_pwm; pwm += pwm_step) {
     // Set PWM

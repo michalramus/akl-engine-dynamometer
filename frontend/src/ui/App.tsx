@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import reactLogo from './assets/react.svg';
 import './App.css';
 import Terminal from './Terminal';
 import Settings from './Settings';
 import Sender from './Sender';
 import Stats from './Stats';
 import Charts from './Charts';
-import { ipcRenderer } from 'electron';
-import { SerialPort } from 'serialport';
+
 
 interface ArduinoData {
   current: number;
@@ -65,16 +63,19 @@ const App: React.FC = () => {
   const addCommand = (newCommand: string): void => {
     if (newCommand.trim()) {
       console.log('Adding command:', newCommand);
-      window.electron.sendCommand(newCommand); // Sending data to Arduino
+      window.electron.sendCommand(newCommand);
       setCommands((prevCommands) => [...prevCommands, newCommand]);
     }
   };
 
   const setSettings = ({ serial_port, baud_rate, csv_file }: { serial_port: string; baud_rate: string; csv_file: string }): void => {
-    if(serial_port != "" && baud_rate != ""){
-      window.electron.changeSaveFile(serial_port,baud_rate);
+    console.log('Settings:', serial_port, baud_rate, csv_file);
+    if(serial_port != "" || baud_rate != ""){
+      console.log('Changing settings:', serial_port, baud_rate);
+      window.electron.changeArduinoPort(serial_port,baud_rate);
     }
     if(csv_file != ""){
+      console.log('Changing save file:', csv_file);
       window.electron.changeSaveFile(csv_file);
     }
   }

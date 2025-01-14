@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electron', {
     },
     changeArduinoPort: (new_port: string, new_baud_rate: number) => {
       ipcRenderer.send('arduino-data', new_port, new_baud_rate);
+      console.log(new_port, new_baud_rate);
     },
     changeSaveFile: (file: string) => {
       ipcRenderer.send('change-save-file',file);

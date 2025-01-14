@@ -6,6 +6,7 @@
       "outDir": "../../dist-electron",
       "skipLibCheck": true,
       "moduleResolution": "bundler",
+      "types": ["../../types"]
       
     }, 
     "type":"module"
