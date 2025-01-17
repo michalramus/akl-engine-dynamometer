@@ -62,7 +62,7 @@ def generate_graphs(csv_file=""):
                 f"CSV file must contain the following columns: {required_columns}"
             )
 
-        data["Power"] = data["Voltage"] * data["Current"]
+        data["Power"] = (data["Voltage"] * data["Current"]) / 1000000
 
         # Plot PWM vs Power
         plt.figure(figsize=(10, 6))
