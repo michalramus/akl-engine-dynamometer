@@ -23,6 +23,13 @@ def read_settings(filename="settings.txt"):
         "serial_connection_wait": 3,
         "csv_file": "test_log.csv",
     }
+    # Change directory to the file's directory if not already there, to read and save files here.
+    currentDir = os.getcwd()
+    fileDir = os.path.dirname(os.path.realpath(__file__))
+    if currentDir != fileDir:
+        print("Changing dir from: ", currentDir, " to: ", fileDir)
+        os.chdir(fileDir)
+    # Read settings from file
     if os.path.exists(filename):
         with open(filename, "r") as file:
             for line in file:
@@ -157,17 +164,34 @@ def start_test():
     print(f"Test completed. Results saved to {settings['csv_file']}")
     generate_graphs(settings["csv_file"])
 
+def find_arduino_port():
+    import serial.tools.list_ports
+    global settings
+    ports = list(serial.tools.list_ports.comports())
+    for port in ports:
+        if "Arduino" in port.description:
+            print(f"Found Arduino on {port.device}")
+            settings["serial_port"] = port.device
+            return port.device
+    return None
 
 def communicate_with_arduino():
-    global settings, ser
+    global ser
     try:
-        ser = serial.Serial(settings["serial_port"], settings["baud_rate"], timeout=1)
+        try:
+            ser = serial.Serial(settings["serial_port"], settings["baud_rate"], settings["serial_connection_wait"])
+        except serial.SerialException as e:
+            print(f"Failed to connect to Arduino on {settings['serial_port']}, trying to find automatically...")
+            port = find_arduino_port()
+            if port is not None:
+                ser = serial.Serial(port, settings["baud_rate"], settings["serial_connection_wait"])
+            else:
+                raise e
         time.sleep(settings["serial_connection_wait"])
         print(f"Connected to Arduino on {settings['serial_port']}")
         ser.reset_input_buffer()
 
         while True:
-
             command = input(
                 "Enter a command from: startTest, set <pwm>, get, makeGraphs, quit "
             ).strip()
@@ -207,9 +231,4 @@ def communicate_with_arduino():
 
 read_settings()  # always read the settings on file load, avoid having to call it from frontend
 if __name__ == "__main__":
-    currentDir = os.getcwd()
-    fileDir = os.path.dirname(os.path.realpath(__file__))
-    if currentDir != fileDir:
-        print("Changing dir from: ", currentDir, " to: ", fileDir)
-        os.chdir(fileDir)
     communicate_with_arduino()
