@@ -63,6 +63,7 @@ def generate_graphs(csv_file=""):
             )
 
         data["Power"] = (data["Voltage"] * data["Current"]) / 1000000
+        print("Generating graphs, close previous graphs to view the next one...")
 
         # Plot PWM vs Power
         plt.figure(figsize=(10, 6))
@@ -154,6 +155,7 @@ def start_test():
     # Save results to CSV
     save_to_csv(settings["csv_file"], data_log)
     print(f"Test completed. Results saved to {settings['csv_file']}")
+    generate_graphs(settings["csv_file"])
 
 
 def communicate_with_arduino():
@@ -163,8 +165,6 @@ def communicate_with_arduino():
         time.sleep(settings["serial_connection_wait"])
         print(f"Connected to Arduino on {settings['serial_port']}")
         ser.reset_input_buffer()
-
-        delay = float(settings["command_delay"])
 
         while True:
 
@@ -207,5 +207,9 @@ def communicate_with_arduino():
 
 read_settings()  # always read the settings on file load, avoid having to call it from frontend
 if __name__ == "__main__":
-
+    currentDir = os.getcwd()
+    fileDir = os.path.dirname(os.path.realpath(__file__))
+    if currentDir != fileDir:
+        print("Changing dir from: ", currentDir, " to: ", fileDir)
+        os.chdir(fileDir)
     communicate_with_arduino()
