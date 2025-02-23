@@ -1,0 +1,5 @@
+pip install pyinstaller
+
+pyinstaller --onefile -w '.\gui.py' --icon '.\logo.jpg' --windowed
+
+utworzyć folder w którym bedzie plik exe i settings. Done

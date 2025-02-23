@@ -89,8 +89,8 @@ class ArduinoGUI(QWidget):
         save_btn = QPushButton("Save Settings")
         save_btn.clicked.connect(self.save_settings)
         layout.addWidget(save_btn)
-
         self.settings_tab.setLayout(layout)
+        
     def init_control_tab(self):
         layout = QVBoxLayout()
         
@@ -217,7 +217,7 @@ class ArduinoGUI(QWidget):
         return None
 
     def connect_to_arduino(self):
-        from time import sleep
+        
         if self.ser and self.ser.is_open:
             self.log_output("Arduino is already connected.")
             self.is_connected = True
@@ -232,6 +232,7 @@ class ArduinoGUI(QWidget):
             time.sleep(self.settings["serial_connection_wait"])
             self.is_connected = True
             self.log_output(f"Connected to Arduino on {self.settings['serial_port']}")
+            self.ser.reset_input_buffer()
         except serial.SerialException:
             self.is_connected = False
             self.log_output("Failed to connect to Arduino!")
