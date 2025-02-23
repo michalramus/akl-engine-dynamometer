@@ -42,25 +42,20 @@ class ArduinoGUI(QWidget):
         self.setWindowTitle("Arduino Control Panel")
         self.setGeometry(100, 100, 800, 600)
 
-        # Tworzymy TabWidget dla zakładek
         self.tabs = QTabWidget()
-        
-        # Tworzymy zakładki
+         
         self.control_tab = QWidget()
         self.settings_tab = QWidget()
         
         self.tabs.addTab(self.control_tab, "Control Panel")
         self.tabs.addTab(self.settings_tab, "Settings")
 
-        # Layout główny
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
 
-        # Inicjalizujemy zakładkę kontrolną
         self.init_control_tab()
 
-        # Inicjalizujemy zakładkę ustawień
         self.init_settings_tab()
 
     def init_settings_tab(self):
@@ -68,8 +63,7 @@ class ArduinoGUI(QWidget):
 
         self.serial_port_input = QLineEdit(self.settings["serial_port"])
 
-        # Tworzymy walidator dla portu COM
-        com_regex = QRegularExpression(r"^COM[1-9]\d*$")  # Obsługujemy COM1, COM2, ..., COM99999
+        com_regex = QRegularExpression(r"^COM[1-9]\d*$") 
         com_validator = QRegularExpressionValidator(com_regex)
         self.serial_port_input.setValidator(com_validator)
 
@@ -142,22 +136,20 @@ class ArduinoGUI(QWidget):
                 for line in file.readlines():
                     key, value = line.strip().split("=")
                     if key in self.settings:
-                        # If the key is serial_port, validate it to be in "COMx" format
                         if key == "serial_port":
                             com_regex = r"^COM[1-9]\d*$"
                             if re.match(com_regex, value):
                                 self.settings[key] = value
                             else:
-                                self.settings[key] = "COM3"  # Default to COM3 if invalid
-                        # If it's a number, ensure correct type conversion
+                                self.settings[key] = "COM3" 
+                        
                         elif key in ["baud_rate", "pwm_step_size", "serial_connection_wait"]:
-                            self.settings[key] = int(float(value))  # Handle cases like 115200.0
+                            self.settings[key] = int(float(value)) 
                         elif key == "command_delay":
                             self.settings[key] = float(value)
                         else:
                             self.settings[key] = value
 
-                # Update the UI fields after loading settings
                 self.serial_port_input.setText(self.settings["serial_port"])
                 self.baud_rate_input.setText(str(self.settings["baud_rate"]))  
                 self.pwm_step_size_input.setText(str(self.settings["pwm_step_size"]))  
@@ -172,37 +164,23 @@ class ArduinoGUI(QWidget):
 
     def save_settings(self):
         try:
-            # Serial port (string), no need for type conversion
             self.settings["serial_port"] = self.serial_port_input.text()
-
-            # Baud rate - must be an integer
             self.settings["baud_rate"] = int(float(self.baud_rate_input.text()))  
-
-            # PWM step size - must be an integer
             self.settings["pwm_step_size"] = int(self.pwm_step_size_input.text())
-
-            # Command delay - can be a float
             self.settings["command_delay"] = float(self.command_delay_input.text())
-
-            # Serial connection wait - must be an integer
             self.settings["serial_connection_wait"] = int(float(self.serial_connection_wait_input.text()))  
-
-            # CSV file (string)
             self.settings["csv_file"] = self.csv_file_input.text()
 
-            # Save settings to the file
             with open("settings.txt", "w") as file:
                 for key, value in self.settings.items():
                     file.write(f"{key}={value}\n")
 
             self.log_output("Settings saved successfully.")
             
-            # Show success message box
             QMessageBox.information(self, "Success", "Settings have been saved successfully.")
         except ValueError as e:
             self.log_output(f"Error saving settings: {e}. Please ensure all fields have valid values.")
             
-            # Show error message box
             QMessageBox.critical(self, "Error", f"Error saving settings: {e}. Please ensure all fields have valid values.")
 
     def log_output(self, message):
